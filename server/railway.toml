@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "node index.js"
+
+[nixpacks.config]
+packages = ["nodejs_20", "python311", "python311Packages.pip"]
+buildCommand = "npm install && pip3 install pandas numpy scikit-learn matplotlib seaborn joblib"
+
+[[nixpacks.phases.setup]]
+cmds = ["apt-get update", "apt-get install -y python3-dev"]

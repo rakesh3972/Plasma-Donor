@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Search Test</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Plasma Donor Search Test</h1>
+    
+    <button onclick="testShowAllDonors()">Show All Available Donors</button>
+    <button onclick="testAISearch()">Smart Search (AI-Powered)</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function showResult(title, content, isError = false) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = `
+                <h3 class="${isError ? 'error' : 'success'}">${title}</h3>
+                <pre>${content}</pre>
+            `;
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        async function testShowAllDonors() {
+            try {
+                showResult('Testing "Show All Available Donors"...', 'Making API call...');
+                
+                // Simulate frontend logic
+                const response = await axios.get(`${API_BASE}/search/donors`, {
+                    params: {
+                        lat: 19.0760,
+                        lng: 72.8777,
+                        radius: 1000
+                    }
+                });
+                
+                let donorsData = [];
+                if (response.data && response.data.matches) {
+                    donorsData = response.data.matches;
+                } else if (Array.isArray(response.data)) {
+                    donorsData = response.data;
+                } else {
+                    donorsData = [];
+                }
+                
+                showResult(
+                    `✅ Show All Donors: Found ${donorsData.length} donors`, 
+                    `Total donors: ${donorsData.length}\n` +
+                    `Sample donors:\n${donorsData.slice(0, 3).map(d => `- ${d.name} (${d.bloodGroup}) - ${d.location?.address || 'No address'}`).join('\n')}`
+                );
+                
+            } catch (error) {
+                showResult('❌ Show All Donors Failed', `Error: ${error.message}\nDetails: ${JSON.stringify(error.response?.data || 'No response data', null, 2)}`, true);
+            }
+        }
+        
+        async function testAISearch() {
+            try {
+                showResult('Testing "Smart Search (AI-Powered)"...', 'Making AI search API call...');
+                
+                const response = await axios.get(`${API_BASE}/search/ml`, {
+                    params: {
+                        bloodGroup: 'A+',
+                        lat: 12.9716,
+                        lng: 77.5946,
+                        radius: 100,
+                        autoRequest: true
+                    }
+                });
+                
+                const aiResults = response.data.matches || [];
+                
+                const processedResults = aiResults.map(match => ({
+                    _id: match.donor_id,
+                    name: match.donor_name,
+                    bloodGroup: match.donor_blood_group,
+                    phoneNumber: match.donor_phone,
+                    distance: match.distance,
+                    ml_score: match.ml_score,
+                    compatibility_score: match.compatibility_score
+                }));
+                
+                showResult(
+                    `✅ AI Search: Found ${processedResults.length} compatible donors`,
+                    `Compatible donors: ${processedResults.length}\n` +
+                    `Details:\n${processedResults.map(d => `- ${d.name} (${d.bloodGroup}) - Distance: ${d.distance}km, ML Score: ${d.ml_score}`).join('\n')}\n\n` +
+                    `Raw response: ${JSON.stringify(response.data, null, 2)}`
+                );
+                
+            } catch (error) {
+                showResult('❌ AI Search Failed', `Error: ${error.message}\nDetails: ${JSON.stringify(error.response?.data || 'No response data', null, 2)}`, true);
+            }
+        }
+    </script>
+</body>
+</html>

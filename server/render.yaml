@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: plasma-donor-backend
+    env: node
+    plan: free
+    buildCommand: npm install && pip3 install pandas numpy scikit-learn matplotlib seaborn joblib
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: PYTHON_PATH
+        value: python3
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false
